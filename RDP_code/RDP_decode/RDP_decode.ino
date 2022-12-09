@@ -5,7 +5,7 @@
 #define string String
 #define MAXN 205
 #define dl 50
-#define stdout A1
+#define stdout A2
 #define stdin A0
 #define high 700
 #define low 100
@@ -16,8 +16,8 @@ short prev[3];
 //in order is sin 1000,sin 2000,cos 1000,cos 2000
 void setup() {
   // Serial.begin(115200);
-  pinMode(stdin,INPUT);
-  pinMode(stdout,OUTPUT);
+  pinMode(A0,INPUT);
+  pinMode(A2,OUTPUT);
   // Serial.println("hi3");
   cli();
   TCCR2A = (1 << WGM21);
@@ -44,24 +44,26 @@ void loop() {
   // OCR2A = 20; //define upper limit of counter before it resets.
   // sei();
 }
-ISR(ADC_vect){
+ISR(TIMER2_COMPA_vect){
   // Serial.println("hi");// for testing
-  r++;
-  // Serial.println("h2");
-  r&=(7);
-  // Serial.println("h3");
-  buff[r]=ADC;
-  ADCSRA|=0x40;
-  if(ADC>512){
-    PORTC|=0x02;
-  }else{
-    PORTC&=~0x02;
-  }
-  // Serial.println("h4");
-  // for(int i=0;i<=7;i++){
-  //   Serial.println("h5");
-  //   Serial.println(buff[i]);
+  PORTC^=0x04;
+  // r++;
+  // // Serial.println("h2");
+  // r&=(7);
+  // // Serial.println("h3");
+  // buff[r]=ADC;
+  // // ADCSRA|=0x40;
+  // if(buff[r]>512){
+  //   PORTC|=0x04;
+  // }else{
+  //   PORTC&=~0x04;
   // }
+  // // ADCSRA|=0x40;
+  // // Serial.println("h4");
+  // // for(int i=0;i<=7;i++){
+  // //   Serial.println("h5");
+  // //   Serial.println(buff[i]);
+  // // }
   // ADCSRA|=0x40;
   // vals[0]=buff[(2)&7]+(buff[(3)&7]<<1)+buff[(4)&7]-buff[(6)&7]-(buff[(7)&7]<<1)-buff[0];
   // vals[1]=(buff[(2)&7]<<1)-(buff[(4)&7]<<1)+(buff[(6)&7]<<1)-(buff[0]<<1);
