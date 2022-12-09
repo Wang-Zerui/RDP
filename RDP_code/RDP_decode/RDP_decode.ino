@@ -26,7 +26,7 @@ void setup() {
   OCR2A = 20; //define upper limit of counter before it resets.
   ADMUX=0x40;
   ADCSRA|=B11000111;
-  ADCSRA |= B00000100; // set ADIE bit in ADCSRA register
+  // ADCSRA |= B00000100; // set ADIE bit in ADCSRA register
   ADCSRA |= B01000000; // set ADSC bit in ADCSRA register
   // Serial.println("HI");
   sei();
@@ -36,13 +36,13 @@ void setup() {
 // int num;
 void loop() {
   // Serial.println("ahh");
-  cli();
+  // cli();
   // Serial.println("hi2");
-  TCCR2A = (1 << WGM21);
-  TCCR2B = (1 << CS21)|(1 << CS20);
-  TIMSK2 = (1 << OCIE2A);
-  OCR2A = 20; //define upper limit of counter before it resets.
-  sei();
+  // TCCR2A = (1 << WGM21);
+  // TCCR2B = (1 << CS21)|(1 << CS20);
+  // TIMSK2 = (1 << OCIE2A);
+  // OCR2A = 20; //define upper limit of counter before it resets.
+  // sei();
 }
 ISR(ADC_vect){
   // Serial.println("hi");// for testing
@@ -51,6 +51,7 @@ ISR(ADC_vect){
   r&=(7);
   // Serial.println("h3");
   buff[r]=ADC;
+  ADCSRA|=0x40;
   if(ADC>512){
     PORTC|=0x02;
   }else{
