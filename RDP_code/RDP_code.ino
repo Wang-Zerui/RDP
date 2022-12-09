@@ -1,10 +1,3 @@
-/*
-This code sends the signal.
-The signal sent is in the following format:
-The number of characters, 8 bits each, send 3 times
-Then, all the characters, each of them being 8 bits
-Lastly, all the row sums(16 bits each), all the column sums(8 column sums), 16 bits each, and that whole thing is send 3 times.
-**/
 #pragma comment(linker,"/stack:200000000")
 #pragma GCC optimize("Ofast")
 #pragma GCC optimize("inline")
@@ -12,20 +5,43 @@ Lastly, all the row sums(16 bits each), all the column sums(8 column sums), 16 b
 #define int long
 #define string String
 #define MAXN 205
+#define SEND_MAX 10010
 #define dl 100
 #define stdout A1
-#define high 2800
+#define high 199
 #define low 500
+#include <avr/io.h>
+#include <avr/interrupt.h>
+const int prescale  = 8;
+const int ocr2aval  = (16000000/(16000000/(3000*255)))/3000-1;
+// const int ocr2aval = 254;
+const float iinterval = prescale * (ocr2aval+1) / (F_CPU / 1.0e6);
+const float period    = 2.0 * iinterval;
+const float freq      = 1.0e6 / period;
 void setup() {
-  Serial.begin(115200);
+  // Serial.begin(115200);
   pinMode(A0,INPUT);
   pinMode(A1,OUTPUT);
   pinMode(8,OUTPUT);
-  digitalWrite(8, 1);
+  digitalWrite(8,1);
+  cli();
+  TCCR2A = (1 << WGM21);
+  TCCR2B = (1 << CS21)|(1 << CS20);
+  TIMSK2 = (1 << OCIE2A);
+  OCR2A = 82; //define upper limit of counter before it resets.
+  sei();
+  //am i suppose to uncomment the above?
+  // Serial.print("Interrupt interval = ");
+  // Serial.print(iinterval);
+  // Serial.println(" microseconds");
+  // Serial.print("Period             = ");
+  // Serial.print(period); 
+  // Serial.println(" microseconds");
+  // Serial.print("Frequency          = ");
+  // Serial.print(freq); 
+  // Serial.println(" Hz");
 }
 short arr[MAXN][10];
-int rowsum[MAXN];
-int colsum[10];
 int id=0;
 inline string to_string(int x){
   string str="";
@@ -60,40 +76,31 @@ inline int which(int x){
 }
 inline void send_num(){
   for(int i=7;i>=0;i--){
-    analogWrite(stdout,which(id&(1<<i)));
+    analogWrite(stdout,which(id&(1<<i)));//not using
   }
   // delay(dl);
+}
+unsigned short cnt=0;
+bool flag; // if it is high flag is true, else low frequency flag=false;
+inline void sendh(){
+  cli();
+  TCCR2A = (1 << WGM21);
+  TCCR2B = (1 << CS21)|(1 << CS20);
+  TIMSK2 = (1 << OCIE2A);
+  OCR2A = 124; //define upper limit of counter before it resets.
+  sei();
 }
 inline void send_chars(){
   send_num();
   send_num();
   send_num();
+  register int aa;
   for(int i=1;i<=id;i++){
     for(int j=1;j<=8;j++){
-      // analogWrite(stdout,which(arr[i][j]));
-      tone(stdout,which(arr[i][j]),300);
-      // delay(dl);
+      flag=arr[i][j];
+      sendh();
     }
   }
-}
-inline void send_int(int x){
-  for(int i=15;i>=0;i--){
-    analogWrite(stdout,which(x&(1<<i)));
-  }
-  delay(dl);
-}
-inline void send_sums(){
-  for(int i=1;i<=id;i++){
-    send_int(arr[9][i]);
-  } 
-  for(int j=1;j<=8;j++){
-    send_int(arr[j][id+1]);
-  }
-}
-inline void send_end(){
-  send_sums();
-  send_sums();
-  send_sums();
 }
 void loop() {
   // register char ch;
@@ -106,15 +113,22 @@ void loop() {
   //   send_chars();
   //   send_sums();
   // }
-  // to_bin(2);
-  // send_chars();
-  // id=0;
-  // tone(A1,300,1000);
-  // delay(dl);
-  // tone(A1,1000,1000);
-  // delay(dl);
-  for(int i=500;i<=2500;i++){
-    tone(A1,i,300);
-    delay(dl);
+  // tone(A1,3000,100);
+  // flag=true;
+  sendh();
+}
+volatile unsigned char value = 0;
+ISR(TIMER2_COMPA_vect){
+  // flag?PORTC^=2:(cnt&1?PORTC^=2:NULL);
+  flag=PIND&0x01;
+  // Serial.println(flag);
+  if(flag){
+    PORTC^=2;
+  }else{
+    if(cnt&1){
+      PORTC^=2;
+      // Serial.println(cnt);
+    }
   }
+  cnt^=1;
 }

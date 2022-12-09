@@ -1,94 +1,98 @@
-/*
-This code receives the signal.
-The signal received is in the following format:
-The number of characters, 8 bits each, send 3 times
-Then, all the characters, each of them being 8 bits
-Lastly, all the row sums(16 bits each), all the column sums(8 column sums), 16 bits each, and that whole thing is send 3 times.
-**/
-#pragma comment(linker,"/stack:200000000")
-#pragma GCC optimize("Ofast")
-#pragma GCC optimize("inline")
-#pragma GCC optimize("unroll-loops")
-#define int long
+// #pragma comment(linker,"/stack:200000000")
+// #pragma GCC optimize("Ofast")
+// #pragma GCC optimize("inline")
+// #pragma GCC optimize("unroll-loops")
 #define string String
 #define MAXN 205
 #define dl 50
 #define stdout A1
+#define stdin A0
 #define high 700
 #define low 100
+short r=1;
+int buff[10];
+long vals[4];
+short prev[3];
+//in order is sin 1000,sin 2000,cos 1000,cos 2000
 void setup() {
-  Serial.begin(115200);
-  pinMode(A0,INPUT);
+  // Serial.begin(115200);
+  pinMode(stdin,INPUT);
+  pinMode(stdout,OUTPUT);
+  // Serial.println("hi3");
+  cli();
+  TCCR2A = (1 << WGM21);
+  TCCR2B = (1 << CS21)|(1 << CS20);
+  TIMSK2 = (1 << OCIE2A);
+  OCR2A = 20; //define upper limit of counter before it resets.
+  ADMUX=0x40;
+  ADCSRA|=B11000111;
+  ADCSRA |= B00000100; // set ADIE bit in ADCSRA register
+  ADCSRA |= B01000000; // set ADSC bit in ADCSRA register
+  // Serial.println("HI");
+  sei();
 }
-int arr[MAXN][10];
-int rowsum[MAXN];
-int colsum[10];
-int ourrowsum[MAXN];
-int ourcolsum[10];
-int buff[MAXN<<5];
-int num;
-inline void read_8bits(int x){
-  for(int i=1;i<=8;i++){
-    arr[x][i]=analogRead(A0);
-  }
-}
-inline int read_16bits(){
-  int ans=0;
-  
-}
-inline void get_num(){
-  int a=0;
-  int b=0;
-  int c=0;
-  int temp;
-  
-  for(int i=1;i<=8;i++){
-    temp=analogRead(A0);
-    a=(a<<1)+temp;
-  }
-}
-inline void read(){
-  for(int i=1;i<MAXN;i++){
-    for(int j=1;j<=8;j++){
-        arr[i][j]=analogRead(A0);
-    }
-  }
-}
-inline string to_string(int x){
-  string str="";
-  while(x){
-    str+=(x%10);
-    x/=10;
-  }
-  return str;
-}
-inline int to_int(char x){
-  return x-'0';
-}
-inline void summed(){
-
-}
-inline bool check(int id){
-  int sum=0;
-  for(int j=1;j<=7;j++){
-    sum+=arr[id][j];
-  }
-  return (sum%2)==arr[id][8];
-}
-inline char decode(int id){
-  if(check(id)){
-    int ans=0;
-    for(int j=1;j<=8;j++){
-      ans<<=1;
-      ans+=arr[id][j];
-    }
-    return char(ans);
-  }
-
-}
+// int arr[MAXN][10];
+// int buff[MAXN<<5];
+// int num;
 void loop() {
-  // for(int i=1;i<(MAXN<<5);i++){
-  //   buff[i]=1;
+  // Serial.println("ahh");
+  cli();
+  // Serial.println("hi2");
+  TCCR2A = (1 << WGM21);
+  TCCR2B = (1 << CS21)|(1 << CS20);
+  TIMSK2 = (1 << OCIE2A);
+  OCR2A = 20; //define upper limit of counter before it resets.
+  sei();
+}
+ISR(ADC_vect){
+  // Serial.println("hi");// for testing
+  r++;
+  // Serial.println("h2");
+  r&=(7);
+  // Serial.println("h3");
+  buff[r]=ADC;
+  if(ADC>512){
+    PORTC|=0x02;
+  }else{
+    PORTC&=~0x02;
+  }
+  // Serial.println("h4");
+  // for(int i=0;i<=7;i++){
+  //   Serial.println("h5");
+  //   Serial.println(buff[i]);
   // }
-  Serial.println((int)analogRead(A0));
+  // ADCSRA|=0x40;
+  // vals[0]=buff[(2)&7]+(buff[(3)&7]<<1)+buff[(4)&7]-buff[(6)&7]-(buff[(7)&7]<<1)-buff[0];
+  // vals[1]=(buff[(2)&7]<<1)-(buff[(4)&7]<<1)+(buff[(6)&7]<<1)-(buff[0]<<1);
+  // vals[2]=(buff[(1)&7]<<1)+(buff[(2)&7])-buff[(4)&7]-(buff[(5)&7]<<1)-(buff[(6)&7])+buff[0];
+  // vals[3]=-(buff[(2)&7]<<1)+(buff[(4)&7]<<1)-(buff[(6)&7]<<1)+(buff[0]<<1);
+  // long freq_1000=vals[0]*vals[0]+vals[2]*vals[2];//is this correct?
+  // long freq_2000=vals[1]*vals[1]+vals[3]*vals[3];
+  // if(freq_1000>freq_2000){
+  //   //then it is 1000 Hz
+  //   // Serial.println("1000 Hz"); //for testing
+  //   prev[1]=prev[2];
+  //   prev[2]=prev[3];
+  //   prev[3]=0;
+  //   if(!prev[1]||!prev[2]){
+  //     PORTC&=0x02;
+  //   }else{
+  //     PORTC&=~0x02;
+  //     prev[3]=1;
+  //   }
+  // }else{
+  //   PORTC&=~0x02;
+  //   prev[1]=prev[2];
+  //   prev[2]=prev[3];
+  //   prev[3]=1;
+  //   if(prev[1]||prev[2]){
+  //     PORTC&=~0x02;
+  //   }else{
+  //     PORTC&0x02;
+  //     prev[3]=0;
+  //   }
+  //   //it is 2000Hz
+  //   // Serial.println("2000 Hz");//for testing
+  // }
+  // PORTC^=0x02;
 }
